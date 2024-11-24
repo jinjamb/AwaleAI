@@ -16,13 +16,13 @@ public class Interface {
     public void affiche_interface() {
         // Première rangée (de 1 à 8)
         for (int i = 0; i < 8; i++) {
-            System.out.print(String.format("Trou %2d [2b][2r]  ", i + 1));
+            System.out.print(String.format("Trou %2d [%db][%dr]  ", i + 1,this.holes[i][0],this.holes[i][1]));
         }
         System.out.print("\n");
 
         // Deuxième rangée (de 16 à 9, dans l'ordre inverse)
         for (int i = 15; i > 7; i--) {
-            System.out.print(String.format("Trou %2d [2b][2r]  ", i + 1));
+            System.out.print(String.format("Trou %2d [%db][%dr]  ", i + 1,this.holes[i][0],this.holes[i][1]));
         }
     }
 
