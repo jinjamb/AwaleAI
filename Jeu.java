@@ -64,40 +64,44 @@ public class Jeu {
         return ic;
     }
     public int distribution(Int_char ic,int j){
-        int graine_bleu=this.i.holes[ic.i][0];
-        int graine_rouge=this.i.holes[ic.i][1];
+        capture(j,ic.i-1);
+        int graine_bleu=this.i.holes[ic.i-1][0];
+        int graine_rouge=this.i.holes[ic.i-1][1];
         int count=ic.i;
         int jp=1+(j%2);
         int dernier_t;
         if (ic.c=='b'){
+            this.i.holes[count-1][0]=0;
             while (graine_bleu!=0) {
                 graine_bleu -= 1;
-                count = (count + 2) % (14 + j);
+                count = (count + 2+16) % 16;
                 this.i.holes[count - 1][0] += 1;
             }
-            dernier_t=count-1;
+            dernier_t=count;
         }
 
         else{
+            System.out.println(count);
+            this.i.holes[count-1][1]=0;
             count-=2;
             while (graine_rouge!=0){
                 graine_rouge-=1;
-                count=(count+2)%(14+jp);
-                this.i.holes[count][0]+=1;
+                count=(count+2+(14+jp))%(14+jp);
+                this.i.holes[count][1]+=1;
             }
-            dernier_t=count;
+            dernier_t=count-1;
         }
         return dernier_t;
     }
     public void capture(int j,int trou){
         int gains=0;
-        while (((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)) && trou!=0){
+        while ((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)){
             gains+=this.i.holes[trou][0]+this.i.holes[trou][1];
             this.i.holes[trou][0]=0;
             this.i.holes[trou][1]=0;
             trou-=1;
-            if (trou==0){
-                trou=16;
+            if (trou==-1){
+                trou=15;
             }
         }
         if(j==1){
@@ -109,12 +113,19 @@ public class Jeu {
     }
     public void semer(int j) {
         Int_char ic=choix_trou(j);
-        int dernier_t=distribution(ic,j);
-        capture(j,dernier_t);
+        distribution(ic,j);
         i.affiche_interface();
     }
+    public void play(){
+        int j=1;
+        while((score_j1!=33 || score_j2!=33)||(score_j1!=32 && score_j2!=32)){
+            System.out.println("\nScore joueur 1 ="+score_j1);
+            System.out.println("Score joueur 2 ="+score_j2);
+            semer(j);
+            j=1+(j%2);
+        }
+    }
 }
-
 
 
 
