@@ -4,6 +4,6 @@ public class Main {
         i.affiche_interface();
         int partie=1;
         Jeu j=new Jeu(i);
-        j.semer(1);
+        j.play();
     }
 }
