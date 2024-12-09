@@ -1,8 +1,11 @@
+import javax.swing.*;
 import java.util.*;
+
+import static java.lang.Integer.max;
+
 public class Jeu {
     int score_j1;
     int score_j2;
-    int joueur;
     Interface i;
 
     Jeu(Interface i) {
@@ -111,20 +114,156 @@ public class Jeu {
             score_j2+=gains;
         }
     }
+    public int famine(int j){
+        int nb=0;
+        if(j==1){
+            for (int k = 0; k < 15; k++) {
+                for (int l = 0; l < 2; l++) {
+                    nb+=this.i.holes[k][l];
+                }
+            }
+        }
+        else{
+            for (int k = 1; k < 16; k++) {
+                for (int l = 0; l < 2; l++) {
+                    nb+=this.i.holes[k][l];
+                }
+            }
+        }
+        return nb;
+    }
     public void semer(int j) {
         Int_char ic=choix_trou(j);
         distribution(ic,j);
         i.affiche_interface();
     }
+
+    public int nb_graines(){
+        int nb=0;
+        for (int k = 0; k < 16; k++) {
+            for (int l = 0; l < 2; l++) {
+                nb+=this.i.holes[k][l];
+            }
+        }
+        return nb;
+    }
+
+    public int nb_graines_trou(){//nombre de graines dans les trous de l'adversaire(sert uniquement à l'ia)
+        int nb=0;
+        for (int k = 0; k < 15; k+=2) {
+            for (int l = 0; l < 2; l++) {
+                nb+=this.i.holes[k][l];
+            }
+        }
+        for (int j = 1; j < 16; j+=2) {
+            for (int l = 0; l < 2; l++) {
+                nb-=this.i.holes[j][l];
+            }
+        }
+        return nb;
+    }
+
+    public int capture_eval(Interface i,int trou){//la fonction capture nous sert dans notre fonction d'evaluation a évalué le nombre de graine qu'on peut capturer à une position donnée
+        int gains=0;
+        while ((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)){
+            gains+=this.i.holes[trou][0]+this.i.holes[trou][1];
+            this.i.holes[trou][0]=0;
+            this.i.holes[trou][1]=0;
+            trou-=1;
+            if (trou==-1){
+                trou=15;
+            }
+        }
+        return gains;
+
+    }
+
+    public int nb_graines_capture(){
+        int nb=0;
+        for (int k = 1; k < 16; k+=2) {
+            for (int l = 0; l < 2; l++) {
+                nb+=this.i.holes[k][l];
+            }
+        }
+        return nb;
+    }
+
+    public ArrayList<Int_char> position_possible(){
+        ArrayList<Int_char> liste_position = new ArrayList<>();
+        int nb_r;
+        int nb_b;
+        for (int k = 1; k < 16; k+=2) {
+            nb_r=this.i.holes[k][0];
+            nb_b=this.i.holes[k][1];
+            if(nb_r!=0){
+                liste_position.add(new Int_char(k,'r'));
+                nb_r=0;
+            }
+            if(nb_b!=0){
+                liste_position.add(new Int_char(k,'b'));
+                nb_b=0;
+            }
+        }
+        return liste_position;
+    }
+
+    public void affiche_liste(){
+        ArrayList<Int_char> a=new ArrayList<>();
+        a=position_possible();
+        for(int i=0;i<a.size();i++){
+            System.out.println(a.get(i).i);
+            System.out.println(a.get(i).c);
+        }
+    }
+
+    public Interface clone_interface(){
+        Interface  a=new Interface();
+        a=this.i;
+        return a;
+    }
+
+    public int evaluation(Int_char ic){
+        int score=score_j2-score_j1;
+        int nb_graine=nb_graines_trou();
+        int famine=0;
+        Interface a=clone_interface();
+        int capture=capture_eval(a,ic.i);
+        if(nb_graines()<=8){
+            famine=100;
+        }
+        return score*10+capture*5+2*nb_graine+50*famine;
+    }
+
+    public Int_char min_max(int noeud, int profondeur,boolean maxi){// à terminer
+        if(profondeur==0){
+            return
+        }
+    }
+
     public void play(){
         int j=1;
-        while((score_j1!=33 || score_j2!=33)||(score_j1!=32 && score_j2!=32)){
+        while((score_j1!=33 || score_j2!=33)||(score_j1!=32 && score_j2!=32)||(nb_graines()>8)||(famine(j)>0)){
             System.out.println("\nScore joueur 1 ="+score_j1);
             System.out.println("Score joueur 2 ="+score_j2);
             semer(j);
             j=1+(j%2);
         }
+        if(score_j1>score_j2){
+            System.out.println("Le joueur 1 vient de gagner !");
+        }
+        else if(score_j1==score_j2){
+            System.out.println("Match nul ! ");
+        }
+        else if(famine(j)==0){
+            System.out.println("Le joueur %d vient de gagner !".formatted(1+(j%2)));
+        }
+        else{
+            System.out.println("Le joueur 2 vient de gagner !");
+        }
+
     }
+}
+
 }
 
 
