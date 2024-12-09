@@ -234,11 +234,93 @@ public class Jeu {
         return score*10+capture*5+2*nb_graine+50*famine;
     }
 
-    public Int_char min_max(int noeud, int profondeur,boolean maxi){// à terminer
-        if(profondeur==0){
-            return
+    public Int_char min_max(int noeud, int profondeur, boolean maxi) {
+        if (profondeur == 0) {
+            // Évaluer la position actuelle et retourner une évaluation
+            return new Int_char(noeud, (char) (evaluation(new Int_char(noeud, ' ')) + '0'));
+        }
+
+
+        ArrayList<Int_char> positionsPossibles = position_possible();
+        Int_char meilleurCoup = null;
+        int meilleureValeur = maxi ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+
+        for (Int_char position : positionsPossibles) {
+            // Cloner l'interface pour simuler le coup
+            Interface cloneInterface = clone_interface();
+            Jeu cloneJeu = new Jeu(cloneInterface);
+            cloneJeu.score_j1 = this.score_j1;
+            cloneJeu.score_j2 = this.score_j2;
+
+            // Simuler le coup
+            cloneJeu.distribution(position, noeud % 2 + 1);
+
+            // Appeler récursivement min_max
+            Int_char resultat = cloneJeu.min_max(position.i, profondeur - 1, !maxi);
+
+            // Mettre à jour la meilleure valeur et le meilleur coup
+            if (maxi) {
+                if (resultat.i > meilleureValeur) {
+                    meilleureValeur = resultat.i;
+                    meilleurCoup = position;
+                }
+            } else {
+                if (resultat.i < meilleureValeur) {
+                    meilleureValeur = resultat.i;
+                    meilleurCoup = position;
+                }
+            }
+        }
+
+        if (meilleurCoup == null) {
+            meilleurCoup = new Int_char(0, ' '); // Si aucun coup n'est trouvé
+        }
+
+        meilleurCoup.i = meilleureValeur; // Ajouter l'évaluation au meilleur coup
+        return meilleurCoup;
+    }
+
+    public void playAgainstAI() {
+        int currentPlayer = 1; // 1 pour le joueur humain, 2 pour l'IA
+        Scanner scanner = new Scanner(System.in);
+
+        while ((score_j1 < 33 && score_j2 < 33) && nb_graines() > 8 && famine(currentPlayer) > 0) {
+            System.out.println("\nScore joueur 1 = " + score_j1);
+            System.out.println("Score joueur 2 = " + score_j2);
+
+            if (currentPlayer == 1) { // Tour du joueur humain
+                System.out.println("\nC'est votre tour !");
+                semer(currentPlayer);
+            } else { // Tour de l'IA
+                System.out.println("\nTour de l'IA...");
+                Int_char bestMove = min_max(currentPlayer, 5, true); // Profondeur de recherche = 5
+                if (bestMove != null && bestMove.c != 0) {
+                    System.out.println("L'IA choisit le trou " + bestMove.i + " avec la couleur " + bestMove.c);
+                    distribution(bestMove, currentPlayer);
+                } else {
+                    System.out.println("L'IA n'a pas pu jouer de coup valide.");
+                    break; // Sortir de la boucle si l'IA ne peut pas jouer
+                }
+            }
+
+            i.affiche_interface(); // Mettre à jour et afficher l'interface
+
+            // Passer au joueur suivant
+            currentPlayer = 1 + (currentPlayer % 2);
+        }
+
+        // Fin du jeu : déterminer le gagnant
+        System.out.println("\nFin du jeu !");
+        if (score_j1 > score_j2) {
+            System.out.println("Félicitations ! Vous avez gagné avec un score de " + score_j1);
+        } else if (score_j2 > score_j1) {
+            System.out.println("L'IA a gagné avec un score de " + score_j2);
+        } else {
+            System.out.println("Match nul !");
         }
     }
+
+
 
     public void play(){
         int j=1;
@@ -264,7 +346,8 @@ public class Jeu {
     }
 }
 
-}
+
+
 
 
 
