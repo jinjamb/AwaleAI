@@ -67,7 +67,6 @@ public class Jeu {
         return ic;
     }
     public int distribution(Int_char ic,int j){
-        capture(j,ic.i-1);
         int graine_bleu=this.i.holes[ic.i-1][0];
         int graine_rouge=this.i.holes[ic.i-1][1];
         int count=ic.i;
@@ -77,22 +76,30 @@ public class Jeu {
             this.i.holes[count-1][0]=0;
             while (graine_bleu!=0) {
                 graine_bleu -= 1;
-                count = (count + 2+16) % 16;
-                this.i.holes[count - 1][0] += 1;
+                count = (count +1);
+                if(count ==17){
+                    count=1;
+                }
+                this.i.holes[count-1][0] += 1;
             }
-            dernier_t=count;
+            dernier_t=count-1;
         }
 
         else{
-            System.out.println(count);
+            System.out.println(graine_rouge);
             this.i.holes[count-1][1]=0;
-            count-=2;
-            while (graine_rouge!=0){
-                graine_rouge-=1;
-                count=(count+2+(14+jp))%(14+jp);
-                this.i.holes[count][1]+=1;
+            count++;
+            this.i.holes[count-1][1] += 1;
+            graine_rouge -= 1;
+            while (graine_rouge!=0) {
+                count-=1;
+                count = (count +2)%16;
+                count+=1;
+                this.i.holes[count-1][1] += 1;
+                graine_rouge -= 1;
+
             }
-            dernier_t=count-1;
+            dernier_t=count;
         }
         return dernier_t;
     }
@@ -134,7 +141,10 @@ public class Jeu {
     }
     public void semer(int j) {
         Int_char ic=choix_trou(j);
-        distribution(ic,j);
+        System.out.println("voilà le trou choisi"+ic.i+ic.c);
+        int dernier_t=distribution(ic,j);
+        System.out.println("voilà le dernier trou"+dernier_t);
+        capture(j,dernier_t);
         i.affiche_interface();
     }
 
@@ -345,6 +355,10 @@ public class Jeu {
 
     }
 }
+
+
+
+
 
 
 
