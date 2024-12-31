@@ -330,7 +330,17 @@ public class Jeu {
         }
     }
 
-
+    public int evaluation(Int_char ic) {
+        int score = score_j2 - score_j1;
+        int nb_graine = nb_graines_trou();
+        int famine = 0;
+        Interface a = clone_interface();
+        int capture = capture_eval(a, ic.i);
+        if (nb_graines() <= 8) {
+            famine = 100;
+        }
+        return score * 10 + capture * 5 + 2 * nb_graine + 50 * famine;
+    }
 
     public void play(){
         int j=1;
