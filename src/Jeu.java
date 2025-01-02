@@ -43,20 +43,22 @@ public class Jeu {
                 int boucle2 = 1;
                 if (!Character.isDigit(option2.charAt(i))) {
                     trou_choisi = Integer.valueOf(option2.substring(0, i));
+                    System.out.println("voici le trou chosi"+ trou_choisi);
                     while (boucle2 == 1) {
-                        if (((option2.charAt(i) == 'b') || (option2.charAt(i) == 'r')) && (trou_choisi >= j && trou_choisi <= 14+j && ((j==1)||(j == 2)))) {
+                        if (((option2.charAt(i) == 'b') || (option2.charAt(i) == 'r')) && (trou_choisi >= j && trou_choisi <= 14+j && ((j==1)||(j == 2)))&&(trou_choisi % 2 == Math.abs(j-2))&&(this.i.holes[(trou_choisi-1)%16][0]+this.i.holes[(trou_choisi-1)%16][1]>0)){
                             ic.c = option2.charAt(i);
                             ic.i=trou_choisi;
                             boucle2 = 0;
                             boucle1 = 0;
                         }
-                        else if (!(trou_choisi >= j && trou_choisi <= 14+j && trou_choisi % 2 == j)) {
+                        else if (!(trou_choisi >= j && trou_choisi <= 14+j && trou_choisi % 2 == j)&&(this.i.holes[(trou_choisi-1)%16][0]+this.i.holes[(trou_choisi-1)%16][1]==0)) {
                             affiche_option(j,1);
                             break;
                         } else if (!(option2.charAt(i) == 'b') || (option2.charAt(i) == 'r')) {
                             System.out.print("Vous devez choisir une couleur entre le bleu et le rouge");
                             break;
-                        } else {
+                        }
+                        else {
                             affiche_option(j,0);
                             break;
                         }
@@ -69,33 +71,41 @@ public class Jeu {
     public int distribution(Int_char ic,int j){
         int graine_bleu=this.i.holes[ic.i-1][0];
         int graine_rouge=this.i.holes[ic.i-1][1];
-        int count=ic.i;
+        int count=ic.i-1;
         int jp=1+(j%2);
         int dernier_t;
         if (ic.c=='b'){
-            this.i.holes[count-1][0]=0;
+            this.i.holes[count][0]=0;
             while (graine_bleu!=0) {
                 graine_bleu -= 1;
-                count = (count +1);
-                if(count ==17){
-                    count=1;
+                count +=1 ;
+                if(count ==16){
+                    count=0;
                 }
-                this.i.holes[count-1][0] += 1;
+                this.i.holes[count][0] += 1;
             }
-            dernier_t=count-1;
+            dernier_t=count;
         }
 
         else{
-            System.out.println(graine_rouge);
-            this.i.holes[count-1][1]=0;
-            count++;
-            this.i.holes[count-1][1] += 1;
-            graine_rouge -= 1;
+            if(graine_rouge!=0) {
+                this.i.holes[count][1] = 0;
+                count++;
+                if(count ==16){
+                    count=0;
+                }
+                this.i.holes[count][1] += 1;
+                graine_rouge -= 1;
+            }
             while (graine_rouge!=0) {
-                count-=1;
-                count = (count +2)%16;
-                count+=1;
-                this.i.holes[count-1][1] += 1;
+                count =count+2;
+                if(count==17 && j==1){
+                    count=1;
+                }
+                if(count==16 && j==2){
+                    count=0;
+                }
+                this.i.holes[count][1] += 1;
                 graine_rouge -= 1;
 
             }
@@ -124,14 +134,14 @@ public class Jeu {
     public int famine(int j){
         int nb=0;
         if(j==1){
-            for (int k = 0; k < 15; k++) {
+            for (int k = 0; k < 15; k+=2) {
                 for (int l = 0; l < 2; l++) {
                     nb+=this.i.holes[k][l];
                 }
             }
         }
         else{
-            for (int k = 1; k < 16; k++) {
+            for (int k = 1; k < 16; k+=2) {
                 for (int l = 0; l < 2; l++) {
                     nb+=this.i.holes[k][l];
                 }
@@ -141,11 +151,13 @@ public class Jeu {
     }
     public void semer(int j) {
         Int_char ic=choix_trou(j);
-        System.out.println("voilà le trou choisi"+ic.i+ic.c);
         int dernier_t=distribution(ic,j);
-        System.out.println("voilà le dernier trou"+dernier_t);
         capture(j,dernier_t);
         i.affiche_interface();
+    }
+    public void semer_ai(int j,Int_char ic) {
+        int dernier_t=distribution(ic,j);
+        capture(j,dernier_t);
     }
 
     public int nb_graines(){
@@ -173,7 +185,8 @@ public class Jeu {
         return nb;
     }
 
-    public int capture_eval(Interface i,int trou){//la fonction capture nous sert dans notre fonction d'evaluation a évalué le nombre de graine qu'on peut capturer à une position donnée
+    public int capture_eval(Interface i,int trou){//la fonction capture nous sert dans notre fonction d'evaluation
+        // a évalué le nombre de graine qu'on peut capturer à une position donnée
         int gains=0;
         while ((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)){
             gains+=this.i.holes[trou][0]+this.i.holes[trou][1];
@@ -198,49 +211,41 @@ public class Jeu {
         return nb;
     }
 
-    public ArrayList<Int_char> position_possible(){
+    public ArrayList<Int_char> position_possible(int j){
         ArrayList<Int_char> liste_position = new ArrayList<>();
         int nb_r;
         int nb_b;
-        for (int k = 1; k < 16; k+=2) {
-            nb_r=this.i.holes[k][0];
-            nb_b=this.i.holes[k][1];
-            if(nb_r!=0){
-                liste_position.add(new Int_char(k,'r'));
-                nb_r=0;
+        if (j==1){
+            for (int k = 0; k < 15; k+=2) {
+                nb_b=this.i.holes[k][0];
+                nb_r=this.i.holes[k][1];
+                if(nb_r!=0){
+                    System.out.print(k+"r+");
+                    liste_position.add(new Int_char(k+1,'r'));
+                    nb_r=0;
+                }
+                if(nb_b!=0){
+                    System.out.print(k+"b+");
+                    liste_position.add(new Int_char(k+1,'b'));
+                    nb_b=0;
+                }
             }
-            if(nb_b!=0){
-                liste_position.add(new Int_char(k,'b'));
-                nb_b=0;
+        }
+        else {
+            for (int k = 1; k <16; k += 2) {
+                nb_b = this.i.holes[k][0];
+                nb_r = this.i.holes[k][1];
+                if (nb_r != 0) {
+                    liste_position.add(new Int_char(k+1, 'r'));
+                    nb_r = 0;
+                }
+                if (nb_b != 0) {
+                    liste_position.add(new Int_char(k+1, 'b'));
+                    nb_b = 0;
+                }
             }
         }
         return liste_position;
-    }
-
-    public void affiche_liste(){
-        ArrayList<Int_char> a=new ArrayList<>();
-        a=position_possible();
-        for(int i=0;i<a.size();i++){
-            System.out.println(a.get(i).i);
-            System.out.println(a.get(i).c);
-        }
-    }
-
-    public int evaluation(Int_char ic) {
-        int score = score_j2 - score_j1;
-        int nb_graine = nb_graines_trou();
-        int famine = 0;
-        Interface a = clone_interface();
-        int capture = capture_eval(a, ic.i);
-        if (nb_graines() <= 8) {
-            famine = 100;
-        }
-
-        int phaseDeJeu = nb_graines() > 24 ? 1 : (nb_graines() > 12 ? 2 : 3); //Implémente une phase de jeu donc en fonction de la phase de jeu dans laquelle on se trouve on a des solutions disponibles
-        int poidsDuScore = phaseDeJeu == 1 ? 5 : (phaseDeJeu == 2 ? 10 : 15);
-        int poidsDeLaCapture = phaseDeJeu == 1 ? 2 : (phaseDeJeu == 2 ? 5 : 10);
-        int poidsDeLaFamine = 50;
-        return score * poidsDuScore + capture * poidsDeLaCapture + 2 * nb_graine + famine * poidsDeLaFamine;
     }
 
     public Interface clone_interface(){
@@ -249,70 +254,110 @@ public class Jeu {
         return a;
     }
 
-    public Int_char min_max(int noeud, int profondeur, boolean maxi, int alpha, int beta) {
-        if (profondeur == 0) {
-            // Évaluer la position actuelle et retourner une évaluation
-            return new Int_char(noeud, (char) (evaluation(new Int_char(noeud, ' ')) + '0'));
+    public int evaluation(Jeu j,int joueur){
+        int score=j.score_j2-j.score_j1;
+        int nb_graine=nb_graines_trou();
+        int Estfamine=0;
+        //int capture=capture_eval(j.i,ic.i);
+        if(famine(joueur%2+1)==0){
+            Estfamine=100;
         }
-
-        ArrayList<Int_char> positionsPossibles = position_possible();
-        Int_char meilleurCoup = null;
-        int meilleureValeur = maxi ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-
-        for (Int_char position : positionsPossibles) {
-            // Cloner l'interface pour simuler le coup
-            Interface cloneInterface = clone_interface();
-            Jeu cloneJeu = new Jeu(cloneInterface);
-            cloneJeu.score_j1 = this.score_j1;
-            cloneJeu.score_j2 = this.score_j2;
-
-            // Simuler le coup
-            cloneJeu.distribution(position, noeud % 2 + 1);
-
-            // Appeler récursivement min_max
-            Int_char resultat = cloneJeu.min_max(position.i, profondeur - 1, !maxi, alpha, beta);
-
-            // Mettre à jour la meilleure valeur et le meilleur coup
-            if (maxi) {
-                if (resultat.i > meilleureValeur) {
-                    meilleureValeur = resultat.i;
-                    meilleurCoup = position;
-                }
-                alpha = Math.max(alpha, meilleureValeur);
-            } else {
-                if (resultat.i < meilleureValeur) {
-                    meilleureValeur = resultat.i;
-                    meilleurCoup = position;
-                }
-                beta = Math.min(beta, meilleureValeur);
-            }
-        }
-
-        if (meilleurCoup == null) {
-            meilleurCoup = new Int_char(0, ' '); // Si aucun coup n'est trouvé
-        }
-
-        meilleurCoup.i = meilleureValeur; // Ajouter l'évaluation au meilleur coup
-        return meilleurCoup;
+        return score*10+2*nb_graine+50*Estfamine;
     }
 
-    public void playAgainstAI() {
-        int currentPlayer = 1; // 1 pour le joueur humain, 2 pour l'IA
-        Scanner scanner = new Scanner(System.in);
+    public Jeu cloneJeu() {
+        // Créer une copie du jeu actuel
+        Jeu clone = new Jeu(new Interface());
 
-        while ((score_j1 < 33 && score_j2 < 33) && nb_graines() > 8 && famine(currentPlayer) > 0) {
+        // Copier les scores
+        clone.score_j1 = this.score_j1;
+        clone.score_j2 = this.score_j2;
+
+        // Copier l'état du plateau
+        for (int i = 0; i < this.i.holes.length; i++) {
+            clone.i.holes[i] = this.i.holes[i].clone();
+        }
+
+        // Retourner la copie
+        return clone;
+    }
+    public void parcourirPositions(ArrayList<Int_char> positionsPossibles) {
+        // Vérification si la liste est vide
+        if (positionsPossibles.isEmpty()) {
+            System.out.println("La liste des positions possibles est vide.");
+            return;
+        }
+
+        // Parcours de la liste avec une boucle for
+        for (Int_char position : positionsPossibles) {
+            // Affichage des informations de chaque Int_char dans la liste
+            System.out.println("Position: " + position.i + ", Couleur: " + position.c);
+        }
+    }
+    public Int_int_char min_max(Jeu j,int joueur, int profondeur, boolean maxi) {
+        // Si la profondeur est 0, évaluer l'état actuel et retourner une valeur
+        if (profondeur == 0) {
+            int eval = evaluation(j,joueur);
+            Int_char a=new Int_char(0,'o');
+            Int_int_char b=new Int_int_char(eval,a);
+            return b;
+        }
+
+        ArrayList<Int_char> positionsPossibles = j.position_possible(joueur);
+        parcourirPositions(positionsPossibles);
+        Int_char meilleurCoup = null;
+        int meilleureValeur = maxi ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+        if (maxi==true){
+            for (Int_char position : positionsPossibles) {
+                Jeu cloneJeu = j.cloneJeu();
+                cloneJeu.semer_ai(joueur,position);
+                maxi=false;
+                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi);
+                if (resultat.a > meilleureValeur) {
+                    meilleureValeur = resultat.a;
+                    meilleurCoup = position;
+                }
+            }
+        } if(maxi==false) {
+            for (Int_char position : positionsPossibles) {
+                // Cloner l'état du jeu
+                Jeu cloneJeu = j.cloneJeu();
+                maxi=true;
+                // Simuler le coup
+                cloneJeu.semer_ai(joueur,position);
+                // Appeler récursivement min_max
+                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi);
+                if (resultat.a < meilleureValeur) {
+                    meilleureValeur = resultat.a;
+                    meilleurCoup = position;
+                }
+            }
+        }
+        Int_int_char a=new Int_int_char(meilleureValeur,meilleurCoup);
+        return a;
+    }
+
+
+    public void playAgainstAI(int joueur) {
+        Scanner scanner = new Scanner(System.in);
+        int j=1;
+        while ((score_j1 < 33 && score_j2 < 33) && nb_graines() >= 8 && famine(j) > 0) {
             System.out.println("\nScore joueur 1 = " + score_j1);
             System.out.println("Score joueur 2 = " + score_j2);
 
-            if (currentPlayer == 1) { // Tour du joueur humain
+            if (j == joueur) { // Tour du joueur humain
                 System.out.println("\nC'est votre tour !");
-                semer(currentPlayer);
+                semer(j);
             } else { // Tour de l'IA
                 System.out.println("\nTour de l'IA...");
-                Int_char bestMove = min_max(currentPlayer, 5, true, Integer.MIN_VALUE, Integer.MAX_VALUE); // Profondeur de recherche = 5
-                if (bestMove != null && bestMove.c != 0) {
-                    System.out.println("L'IA choisit le trou " + bestMove.i + " avec la couleur " + bestMove.c);
-                    distribution(bestMove, currentPlayer);
+                Interface cloneInterface = clone_interface();
+                Jeu cloneJeu = new Jeu(cloneInterface);
+                cloneJeu.score_j1 = this.score_j1;
+                cloneJeu.score_j2 = this.score_j2;
+                Int_int_char bestMove = min_max(cloneJeu, j, 1,true);
+                System.out.println("Voici le coup de l'ia :"+ bestMove.b.i + bestMove.b.c);
+                if (bestMove != null) {
+                    semer_ai(j,bestMove.b);
                 } else {
                     System.out.println("L'IA n'a pas pu jouer de coup valide.");
                     break; // Sortir de la boucle si l'IA ne peut pas jouer
@@ -322,7 +367,7 @@ public class Jeu {
             i.affiche_interface(); // Mettre à jour et afficher l'interface
 
             // Passer au joueur suivant
-            currentPlayer = 1 + (currentPlayer % 2);
+            j = 1 + (j % 2);
         }
 
         // Fin du jeu : déterminer le gagnant
@@ -336,22 +381,28 @@ public class Jeu {
         }
     }
 
+
+
     public void play(){
         int j=1;
-        while((score_j1!=33 || score_j2!=33)||(score_j1!=32 && score_j2!=32)||(nb_graines()>8)||(famine(j)>0)){
+        System.out.println("\nScore joueur 1 ="+score_j1);
+        System.out.println("Score joueur 2 ="+score_j2);
+        while (((score_j1 != 33) && (score_j2 != 33)) &&
+                (nb_graines() >= 8) &&
+                (famine(j) > 0)){
+            semer(j);
             System.out.println("\nScore joueur 1 ="+score_j1);
             System.out.println("Score joueur 2 ="+score_j2);
-            semer(j);
             j=1+(j%2);
         }
-        if(score_j1>score_j2){
+        if(famine(j)==0){
+            System.out.println("Le joueur %d vient de gagner !".formatted(1+(j%2)));
+        }
+        else if(score_j1>score_j2){
             System.out.println("Le joueur 1 vient de gagner !");
         }
         else if(score_j1==score_j2){
             System.out.println("Match nul ! ");
-        }
-        else if(famine(j)==0){
-            System.out.println("Le joueur %d vient de gagner !".formatted(1+(j%2)));
         }
         else{
             System.out.println("Le joueur 2 vient de gagner !");
@@ -359,13 +410,6 @@ public class Jeu {
 
     }
 }
-
-
-
-
-
-
-
 
 
 
