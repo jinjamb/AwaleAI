@@ -227,10 +227,31 @@ public class Jeu {
         return nb;
     }
 
+    public int capture_eval(Interface i) {
+        int maxGains = 0;
+        for (int trou = 0; trou < 16; trou++) {
+            int gains = 0;
+            int currentTrou = trou;
+            while (currentTrou >= 0 && currentTrou < 16 && ((i.holes[currentTrou][0] + i.holes[currentTrou][1] == 2) || (i.holes[currentTrou][0] + i.holes[currentTrou][1] == 3))) {
+                gains += i.holes[currentTrou][0] + i.holes[currentTrou][1];
+                i.holes[currentTrou][0] = 0;
+                i.holes[currentTrou][1] = 0;
+                currentTrou -= 1;
+                if (currentTrou == -1) {
+                    currentTrou = 15;
+                }
+            }
+            if (gains > maxGains) {
+                maxGains = gains;
+            }
+        }
+        return maxGains;
+    }
+/*
     public int capture_eval(Interface i,int trou){//la fonction capture nous sert dans notre fonction d'evaluation
         // a évalué le nombre de graine qu'on peut capturer à une position donnée
         int gains=0;
-        while ((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)){
+        while (trou >= 0 && trou<16 &&((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3))){
             gains+=this.i.holes[trou][0]+this.i.holes[trou][1];
             this.i.holes[trou][0]=0;
             this.i.holes[trou][1]=0;
@@ -242,7 +263,7 @@ public class Jeu {
         return gains;
 
     }
-
+*/
     public int nb_graines_capture(){
         int nb=0;
         for (int k = 1; k < 16; k+=2) {
@@ -305,7 +326,7 @@ public class Jeu {
         for (Int_char position : j.position_possible(joueur)) {
             Jeu cloneJeu = j.cloneJeu();
             cloneJeu.semer_ai(joueur, position);
-            capturePotentiel += cloneJeu.capture_eval(cloneJeu.i, position.i);
+            capturePotentiel += cloneJeu.capture_eval(cloneJeu.i);
         }
         //int capture=capture_eval(j.i,ic.i);
         if(famine(joueur%2+1)==0){
@@ -403,8 +424,8 @@ public class Jeu {
                 Jeu cloneJeu = new Jeu(cloneInterface);
                 cloneJeu.score_j1 = this.score_j1;
                 cloneJeu.score_j2 = this.score_j2;
-                //Int_int_char bestMove = min_max(cloneJeu, j, 1,true);
-                Int_int_char bestMove = alpha_beta(cloneJeu, j, 9, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                Int_int_char bestMove = min_max(cloneJeu, j, 4,true);
+                //Int_int_char bestMove = alpha_beta(cloneJeu, j, 9, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
                 System.out.println("Voici le coup de l'ia :"+ bestMove.b.i + bestMove.b.c);
                 if (bestMove != null) {
                     semer_ai(j,bestMove.b);
@@ -458,6 +479,54 @@ public class Jeu {
             System.out.println("Le joueur 2 vient de gagner !");
         }
 
+    }
+
+    public void AIvsAI(int p1,int p2) {
+        int j = 1; // Début avec le joueur 1
+        int p;
+        while ((score_j1 < 33 && score_j2 < 33) && nb_graines() >= 8 && famine(j) > 0) {
+            if(j==1){
+                p=p1;
+            }
+            else{
+                p=p2;
+            }
+            System.out.println("\nScore joueur 1 = " + score_j1);
+            System.out.println("Score joueur 2 = " + score_j2);
+            System.out.println("\nTour de l'IA " + (j == 1 ? "Joueur 1" : "Joueur 2") + "...");
+
+            // Cloner l'état actuel du jeu
+            Interface cloneInterface = clone_interface();
+            Jeu cloneJeu = new Jeu(cloneInterface);
+            cloneJeu.score_j1 = this.score_j1;
+            cloneJeu.score_j2 = this.score_j2;
+
+            // Calculer le meilleur coup pour l'IA actuelle
+            Int_int_char bestMove = alpha_beta(cloneJeu, j, p, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            System.out.println("Coup choisi par l'IA " + (j == 1 ? "Joueur 1" : "Joueur 2") + ": " + bestMove.b.i + bestMove.b.c);
+
+            if (bestMove != null) {
+                semer_ai(j, bestMove.b);
+            } else {
+                System.out.println("L'IA n'a pas pu jouer de coup valide.");
+                break; // Sortir de la boucle si l'IA ne peut pas jouer
+            }
+
+            i.affiche_interface(); // Mettre à jour et afficher l'interface
+
+            // Passer au joueur suivant
+            j = 1 + (j % 2);
+        }
+
+        // Fin du jeu : déterminer le gagnant
+        System.out.println("\nFin du jeu !");
+        if (score_j1 > score_j2) {
+            System.out.println("L'IA Joueur 1 a gagné avec un score de " + score_j1);
+        } else if (score_j2 > score_j1) {
+            System.out.println("L'IA Joueur 2 a gagné avec un score de " + score_j2);
+        } else {
+            System.out.println("Match nul !");
+        }
     }
 }
 
