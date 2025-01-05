@@ -113,6 +113,48 @@ public class Jeu {
         }
         return dernier_t;
     }
+
+    public Int_int_char alpha_beta(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta) {
+        if (profondeur == 0) {
+            int eval = evaluation(j, joueur);
+            Int_char a = new Int_char(0, 'o');
+            Int_int_char b = new Int_int_char(eval, a);
+            return b;
+        }
+
+        ArrayList<Int_char> positionsPossibles = j.position_possible(joueur);
+        Int_char meilleurCoup = null;
+        int meilleureValeur = maxi ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+
+        for (Int_char position : positionsPossibles) {
+            Jeu cloneJeu = j.cloneJeu();
+            cloneJeu.semer_ai(joueur, position);
+
+            Int_int_char resultat = alpha_beta(cloneJeu, (joueur % 2) + 1, profondeur - 1, !maxi, alpha, beta);
+
+            if (maxi) {
+                if (resultat.a > meilleureValeur) {
+                    meilleureValeur = resultat.a;
+                    meilleurCoup = position;
+                }
+                alpha = Math.max(alpha, meilleureValeur);
+            } else {
+                if (resultat.a < meilleureValeur) {
+                    meilleureValeur = resultat.a;
+                    meilleurCoup = position;
+                }
+                beta = Math.min(beta, meilleureValeur);
+            }
+
+            if (alpha >= beta) {
+                break;
+            }
+        }
+
+        return new Int_int_char(meilleureValeur, meilleurCoup);
+
+
+    }
     public void capture(int j,int trou){
         int gains=0;
         while ((this.i.holes[trou][0]+this.i.holes[trou][1]==2) || (this.i.holes[trou][0]+this.i.holes[trou][1]==3)){
@@ -258,6 +300,13 @@ public class Jeu {
         int score=j.score_j2-j.score_j1;
         int nb_graine=nb_graines_trou();
         int Estfamine=0;
+        int capturePotentiel = 0;
+
+        for (Int_char position : j.position_possible(joueur)) {
+            Jeu cloneJeu = j.cloneJeu();
+            cloneJeu.semer_ai(joueur, position);
+            capturePotentiel += cloneJeu.capture_eval(cloneJeu.i, position.i);
+        }
         //int capture=capture_eval(j.i,ic.i);
         if(famine(joueur%2+1)==0){
             Estfamine=100;
@@ -354,7 +403,8 @@ public class Jeu {
                 Jeu cloneJeu = new Jeu(cloneInterface);
                 cloneJeu.score_j1 = this.score_j1;
                 cloneJeu.score_j2 = this.score_j2;
-                Int_int_char bestMove = min_max(cloneJeu, j, 1,true);
+                //Int_int_char bestMove = min_max(cloneJeu, j, 1,true);
+                Int_int_char bestMove = alpha_beta(cloneJeu, j, 9, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
                 System.out.println("Voici le coup de l'ia :"+ bestMove.b.i + bestMove.b.c);
                 if (bestMove != null) {
                     semer_ai(j,bestMove.b);
