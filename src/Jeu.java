@@ -115,6 +115,14 @@ public class Jeu {
     }
 
     public Int_int_char alpha_beta(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta) {
+
+        if (joueur==1){
+            maxi=false;
+        }
+        else{
+            maxi=true;
+        }
+
         if (profondeur == 0) {
             int eval = evaluation(j, joueur);
             Int_char a = new Int_char(0, 'o');
@@ -283,12 +291,10 @@ public class Jeu {
                 nb_b=this.i.holes[k][0];
                 nb_r=this.i.holes[k][1];
                 if(nb_r!=0){
-                    System.out.print(k+"r+");
                     liste_position.add(new Int_char(k+1,'r'));
                     nb_r=0;
                 }
                 if(nb_b!=0){
-                    System.out.print(k+"b+");
                     liste_position.add(new Int_char(k+1,'b'));
                     nb_b=0;
                 }
@@ -332,7 +338,7 @@ public class Jeu {
         if(famine(joueur%2+1)==0){
             Estfamine=100;
         }
-        return score*10+2*nb_graine+50*Estfamine;
+        return score*10+2*nb_graine+50*Estfamine + capturePotentiel;
     }
 
     public Jeu cloneJeu() {
@@ -361,11 +367,17 @@ public class Jeu {
         // Parcours de la liste avec une boucle for
         for (Int_char position : positionsPossibles) {
             // Affichage des informations de chaque Int_char dans la liste
-            System.out.println("Position: " + position.i + ", Couleur: " + position.c);
         }
     }
     public Int_int_char min_max(Jeu j,int joueur, int profondeur, boolean maxi) {
         // Si la profondeur est 0, évaluer l'état actuel et retourner une valeur
+        if (joueur==1){
+            maxi=false;
+        }
+        else{
+            maxi=true;
+        }
+
         if (profondeur == 0) {
             int eval = evaluation(j,joueur);
             Int_char a=new Int_char(0,'o');
@@ -424,8 +436,8 @@ public class Jeu {
                 Jeu cloneJeu = new Jeu(cloneInterface);
                 cloneJeu.score_j1 = this.score_j1;
                 cloneJeu.score_j2 = this.score_j2;
-                Int_int_char bestMove = min_max(cloneJeu, j, 4,true);
-                //Int_int_char bestMove = alpha_beta(cloneJeu, j, 9, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                Int_int_char bestMove = min_max(cloneJeu, j, 6,true);
+                //Int_int_char bestMove = alpha_beta(cloneJeu, j, 6, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
                 System.out.println("Voici le coup de l'ia :"+ bestMove.b.i + bestMove.b.c);
                 if (bestMove != null) {
                     semer_ai(j,bestMove.b);
