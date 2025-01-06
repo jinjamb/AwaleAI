@@ -114,7 +114,7 @@ public class Jeu {
         return dernier_t;
     }
 
-    public Int_int_char alpha_beta(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta) {
+    public Int_int_char alpha_beta(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta, int turnCount) {
 
         if (joueur==1){
             maxi=false;
@@ -124,7 +124,7 @@ public class Jeu {
         }
 
         if (profondeur == 0) {
-            int eval = evaluation(j, joueur);
+            int eval = evaluation(j, joueur, turnCount);
             Int_char a = new Int_char(0, 'o');
             Int_int_char b = new Int_int_char(eval, a);
             return b;
@@ -138,7 +138,7 @@ public class Jeu {
             Jeu cloneJeu = j.cloneJeu();
             cloneJeu.semer_ai(joueur, position);
 
-            Int_int_char resultat = alpha_beta(cloneJeu, (joueur % 2) + 1, profondeur - 1, !maxi, alpha, beta);
+            Int_int_char resultat = alpha_beta(cloneJeu, (joueur % 2) + 1, profondeur - 1, !maxi, alpha, beta, turnCount);
 
             if (maxi) {
                 if (resultat.a > meilleureValeur) {
@@ -323,11 +323,22 @@ public class Jeu {
         return a;
     }
 
-    public int evaluation(Jeu j,int joueur){
+    public int phaseDeLaPartie(int turnCount) {
+        if (turnCount < 10) {
+            return 1;
+        } else if (turnCount < 30) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
+    public int evaluation(Jeu j,int joueur, int turnCount){
         int score=j.score_j2-j.score_j1;
         int nb_graine=nb_graines_trou();
         int Estfamine=0;
         int capturePotentiel = 0;
+        int phase = phaseDeLaPartie(turnCount);
 
         for (Int_char position : j.position_possible(joueur)) {
             Jeu cloneJeu = j.cloneJeu();
@@ -338,7 +349,12 @@ public class Jeu {
         if(famine(joueur%2+1)==0){
             Estfamine=100;
         }
-        return score*10+2*nb_graine+50*Estfamine + capturePotentiel;
+
+        return switch (phase) {
+            case 1 -> score * 20 + 2 * nb_graine + 70 * Estfamine + 30 * capturePotentiel;
+            case 2 -> score * 10 + 2 * nb_graine + 50 * Estfamine + 50 * capturePotentiel;
+            default -> score * 10 + 2 * nb_graine + 50 * Estfamine + 60 * capturePotentiel;
+        };
     }
 
     public Jeu cloneJeu() {
@@ -369,7 +385,7 @@ public class Jeu {
             // Affichage des informations de chaque Int_char dans la liste
         }
     }
-    public Int_int_char min_max(Jeu j,int joueur, int profondeur, boolean maxi) {
+    public Int_int_char min_max(Jeu j,int joueur, int profondeur, boolean maxi, int turnCount){
         // Si la profondeur est 0, évaluer l'état actuel et retourner une valeur
         if (joueur==1){
             maxi=false;
@@ -379,7 +395,7 @@ public class Jeu {
         }
 
         if (profondeur == 0) {
-            int eval = evaluation(j,joueur);
+            int eval = evaluation(j,joueur, turnCount);
             Int_char a=new Int_char(0,'o');
             Int_int_char b=new Int_int_char(eval,a);
             return b;
@@ -394,7 +410,7 @@ public class Jeu {
                 Jeu cloneJeu = j.cloneJeu();
                 cloneJeu.semer_ai(joueur,position);
                 maxi=false;
-                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi);
+                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi, turnCount);
                 if (resultat.a > meilleureValeur) {
                     meilleureValeur = resultat.a;
                     meilleurCoup = position;
@@ -408,7 +424,7 @@ public class Jeu {
                 // Simuler le coup
                 cloneJeu.semer_ai(joueur,position);
                 // Appeler récursivement min_max
-                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi);
+                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi, turnCount);
                 if (resultat.a < meilleureValeur) {
                     meilleureValeur = resultat.a;
                     meilleurCoup = position;
@@ -422,6 +438,7 @@ public class Jeu {
 
     public void playAgainstAI(int joueur) {
         Scanner scanner = new Scanner(System.in);
+        int turnCount = 0;
         int j=1;
         while ((score_j1 < 33 && score_j2 < 33) && nb_graines() >= 8 && famine(j) > 0) {
             System.out.println("\nScore joueur 1 = " + score_j1);
@@ -436,8 +453,8 @@ public class Jeu {
                 Jeu cloneJeu = new Jeu(cloneInterface);
                 cloneJeu.score_j1 = this.score_j1;
                 cloneJeu.score_j2 = this.score_j2;
-                Int_int_char bestMove = min_max(cloneJeu, j, 6,true);
-                //Int_int_char bestMove = alpha_beta(cloneJeu, j, 6, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                //Int_int_char bestMove = min_max(cloneJeu, j, 8,true);
+                Int_int_char bestMove = alpha_beta(cloneJeu, j, 6, true, Integer.MIN_VALUE, Integer.MAX_VALUE, turnCount);
                 System.out.println("Voici le coup de l'ia :"+ bestMove.b.i + bestMove.b.c);
                 if (bestMove != null) {
                     semer_ai(j,bestMove.b);
@@ -451,6 +468,7 @@ public class Jeu {
 
             // Passer au joueur suivant
             j = 1 + (j % 2);
+            turnCount++;
         }
 
         // Fin du jeu : déterminer le gagnant
@@ -495,6 +513,7 @@ public class Jeu {
 
     public void AIvsAI(int p1,int p2) {
         int j = 1; // Début avec le joueur 1
+        int turnCount = 0;
         int p;
         while ((score_j1 < 33 && score_j2 < 33) && nb_graines() >= 8 && famine(j) > 0) {
             if(j==1){
@@ -514,7 +533,7 @@ public class Jeu {
             cloneJeu.score_j2 = this.score_j2;
 
             // Calculer le meilleur coup pour l'IA actuelle
-            Int_int_char bestMove = alpha_beta(cloneJeu, j, p, true, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            Int_int_char bestMove = alpha_beta(cloneJeu, j, p, true, Integer.MIN_VALUE, Integer.MAX_VALUE, turnCount);
             System.out.println("Coup choisi par l'IA " + (j == 1 ? "Joueur 1" : "Joueur 2") + ": " + bestMove.b.i + bestMove.b.c);
 
             if (bestMove != null) {
