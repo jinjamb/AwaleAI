@@ -1,4 +1,5 @@
 public class Interface {
+    /* Cette classe nous permet de faire le plateau du jeu */
     int[] color;
     int[][] holes;
     Interface(){
