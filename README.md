@@ -1,6 +1,10 @@
 
 # Jeu Awele avec IA 
 
+### Nos noms 
+#### Celeste Maxime
+#### Cherigui Allah-Eddine
+
 ### Les différentes commandes pour utiliser notre programme (dans le main)
 
 0) La base pour chaque commande :
