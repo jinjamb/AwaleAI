@@ -1,9 +1,4 @@
-import javax.swing.*;
 import java.util.*;
-import java.util.Random;
-
-
-import static java.lang.Integer.max;
 
 public class Jeu {
     int score_j1;
@@ -14,6 +9,7 @@ public class Jeu {
         this.i = i;
     }
     public void affiche_option(int j,int o) {
+        /* Cette fonction affiche lorsque c'est autour d'un des 2 joueurs, quelle choix de trou a-t-il. */
         if (j==1 && o==0){
             System.out.print("\nVous pouvez choisir un trou impair entre 1 et 15 et un couleur " +
                     "sous la forme NC, où :\n" +
@@ -173,7 +169,8 @@ public class Jeu {
         return nb;
     }
 
-    public int nb_graines_trou(){//nombre de graines dans les trous de l'adversaire(sert uniquement à l'ia)
+    public int nb_graines_trou(){//
+         /* nombre de graines dans les trous de l'adversaire(sert uniquement à l'ia) */
         int nb=0;
         for (int k = 0; k < 15; k+=2) {
             for (int l = 0; l < 2; l++) {
@@ -189,6 +186,7 @@ public class Jeu {
     }
 
     public int capture_eval(Interface i) {
+        /* Cette fonction évalue le nombre de graine qu'on peut capturer à une phase de la partie */
         int maxGains = 0;
         for (int trou = 0; trou < 16; trou++) {
             int gains = 0;
@@ -210,6 +208,7 @@ public class Jeu {
     }
 
     public ArrayList<Int_char> position_possible(int j){
+        /* Cette fonction énumère les positions possibles jouables en fonction de l'état du plateau */
         ArrayList<Int_char> liste_position = new ArrayList<>();
         int nb_r;
         int nb_b;
@@ -245,6 +244,7 @@ public class Jeu {
     }
 
     public int phaseDeLaPartie(int turnCount) {
+        /* ici turncount représente le nombre de coup divisé par 2 (un coup par joueur).*/
         if (turnCount < 10) {
             return 1;
         } else if (turnCount < 30) {
@@ -255,6 +255,13 @@ public class Jeu {
     }
 
     public int evaluation(Jeu j,int joueur, int turnCount){
+        /* fonction utiliser dans notre alpha_beta permettant de connaitre le "meilleur" coup à jouer en fonction
+        du score renvoyé par l'algorithme. Ce score dépend de plusieurs paramètres tels que :
+        -si on a une différence score_j2-score_j1 > 0.
+        -le nombre de graine qu'on a.
+        -si on arrive à capturer plusieurs graines pendant cette phase de jeu.
+        -si on arrive à affamer l'adversaire.
+         */
         int score=j.score_j2-j.score_j1;
         int nb_graine=nb_graines_trou();
         int Estfamine=0;
@@ -305,6 +312,9 @@ public class Jeu {
     }
 
     public int evaluation2(Jeu j,int joueur){
+        /*deuxième version de notre fonction d'evaluation utilisé dans notre deuxième alpha_beta
+
+         */
         int score;
         if(joueur==1){
             score=j.score_j1-j.score_j2;
@@ -332,24 +342,22 @@ public class Jeu {
         clone.score_j1 = this.score_j1;
         clone.score_j2 = this.score_j2;
 
-        // Copier l'état du plateau
         for (int i = 0; i < this.i.holes.length; i++) {
             clone.i.holes[i] = this.i.holes[i].clone();
         }
 
-        // Retourner la copie
         return clone;
     }
     public void parcourirPositions(ArrayList<Int_char> positionsPossibles) {
-        // Vérification si la liste est vide
+        /* fonction beaucoup utiliser pour le debogage pour savoir quelles positions sont
+        prises par notre alpha_beta
+         */
         if (positionsPossibles.isEmpty()) {
             System.out.println("La liste des positions possibles est vide.");
             return;
         }
 
-        // Parcours de la liste avec une boucle for
         for (Int_char position : positionsPossibles) {
-            // Affichage des informations de chaque Int_char dans la liste
             System.out.println("Position: " + position.i + ", Couleur: " + position.c);
         }
     }
@@ -371,58 +379,11 @@ public class Jeu {
         }
         return nb;
     }
-
-    public Int_int_char min_max(Jeu j,int joueur, int profondeur, boolean maxi, int turnCount){
-        // Si la profondeur est 0, évaluer l'état actuel et retourner une valeur
-        if (joueur==1){
-            maxi=false;
-        }
-        else{
-            maxi=true;
-        }
-
-        if (profondeur == 0) {
-            int eval = evaluation(j,joueur, turnCount);
-            Int_char a=new Int_char(0,'o');
-            Int_int_char b=new Int_int_char(eval,a);
-            return b;
-        }
-
-        ArrayList<Int_char> positionsPossibles = j.position_possible(joueur);
-        Int_char meilleurCoup = null;
-        int meilleureValeur = maxi ? Integer.MIN_VALUE : Integer.MAX_VALUE;
-        if (maxi==true){
-            for (Int_char position : positionsPossibles) {
-                Jeu cloneJeu = j.cloneJeu();
-                cloneJeu.semer_ai(joueur,position);
-                maxi=false;
-                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi, turnCount);
-                if (resultat.a > meilleureValeur) {
-                    meilleureValeur = resultat.a;
-                    meilleurCoup = position;
-                }
-            }
-        } if(maxi==false) {
-            for (Int_char position : positionsPossibles) {
-                // Cloner l'état du jeu
-                Jeu cloneJeu = j.cloneJeu();
-                maxi=true;
-                // Simuler le coup
-                cloneJeu.semer_ai(joueur,position);
-                // Appeler récursivement min_max
-                Int_int_char resultat = min_max(cloneJeu,(joueur % 2) + 1, profondeur - 1, maxi, turnCount);
-                if (resultat.a < meilleureValeur) {
-                    meilleureValeur = resultat.a;
-                    meilleurCoup = position;
-                }
-            }
-        }
-        Int_int_char a=new Int_int_char(meilleureValeur,meilleurCoup);
-        return a;
-    }
-
     public Int_int_char alpha_beta(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta, int turnCount) {
-
+            /* première version de notre alpha beta fonctionnant avec la première fonction d'evaluation
+            le but est de prendre en paramètre des valeurs alpha = -l'infini, beta=+l'infini puis nous
+            modifions alpha et beta dans notre code
+             */
         if (joueur==1){
             maxi=false;
         }
@@ -472,6 +433,8 @@ public class Jeu {
     }
 
     public Int_int_char alpha_beta2(Jeu j, int joueur, int profondeur, boolean maxi, int alpha, int beta) {
+        /*deuxième version de notre alph beta prenant utilisant une autre fonction d'évaluation*/
+
         // Si la profondeur est 0, évaluer l'état actuel et retourner une valeur
         if (profondeur == 0||!((j.score_j1 < 33 && j.score_j2 < 33) && nb_graines() >= 8 && famine(joueur,j.score_j1,j.score_j2) > 0)) {
             int eval = evaluation2(j, joueur);
@@ -528,7 +491,8 @@ public class Jeu {
 
 
 
-    public void playAgainstAI(int joueur) {
+    public void playAgainstAI(int joueur) {//une fonction nous permettant de jouer contre notre ia
+        //et prenant en paramètre quel joueur souhaite jouer l'utilisateur
         Scanner scanner = new Scanner(System.in);
         int nb_coup=0;
         int j=1;
@@ -710,6 +674,7 @@ public class Jeu {
 
     }
 }
+
 
 
 
